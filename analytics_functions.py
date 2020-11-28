@@ -162,6 +162,7 @@ def player_foul_rate(df, player, window_size=1):
             total_duration+=duration
             total_fouls+=n_fouls
   
+
         
         windows.append((lower_bound,upper_bound))
         duration_list.append(total_duration)
