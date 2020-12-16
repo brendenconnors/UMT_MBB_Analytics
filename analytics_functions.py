@@ -314,3 +314,63 @@ def team_shooting_rate(df, window_size=1):
         
         
     return make_list,miss_list, duration_list, windows
+
+
+def opponent_shooting_rate(df, window_size=1):
+    from more_itertools import consecutive_groups
+    import numpy as np
+
+    rest_cols=['ANDERSON,MACK_mins_since_rest',
+       'EGUN,EDDY_mins_since_rest', 'FALLS,TIMMY_mins_since_rest',
+       'VAZQUEZ,JOSH_mins_since_rest', 'MANUEL,KENDAL_mins_since_rest',
+       'SAMUELSON,JARED_mins_since_rest',
+       'CARTER-HOLLI,DERRICK_mins_since_rest', 'OWENS,KYLE_mins_since_rest',
+       'PRIDGETT,SAYEED_mins_since_rest','SELCUK,YAGIZHAN_mins_since_rest','JONES,PETER_mins_since_rest']
+    
+    windows=[]
+    duration_list=[]
+    make_list=[]
+    miss_list=[]
+    for i in range(21-window_size):
+        lower_bound = i
+        upper_bound = i+window_size
+        
+        
+        temp_df=df[(df[rest_cols].mean(axis=1)>=lower_bound) & (df[rest_cols].mean(axis=1)<upper_bound)]
+        
+        dates=list(temp_df.Date.unique())
+        splits=[]
+        for date in dates:
+            temp_df2 = temp_df[temp_df.Date==date]
+            for half in [1,2]:
+                half_df = temp_df2[temp_df2.Half == half]
+                groups = consecutive_groups(list(half_df.index))
+        
+                group_idxs = [list(g) for g in groups]
+                
+                
+                if len(group_idxs)>0:
+                    splits.extend(group_idxs)
+                
+       
+        total_duration=0
+        total_makes=0
+        total_miss=0
+        for split in splits:
+            temp_df3 = temp_df.loc[split,:]
+            duration = calc_duration(temp_df3)
+            n_makes = len(temp_df3[temp_df3.Opponent_event.isin(['GOOD JUMPER','GOOD 3PTR','GOOD LAYUP','GOOD DUNK'])])
+            n_misses = len(temp_df3[temp_df3.Opponent_event.isin(['MISS','MISS LAYUP','MISS JUMPER','MISS 3PTR','MISS DUNK'])])
+            total_duration+=duration
+            total_makes+=n_makes
+            total_miss+=n_misses
+        
+
+
+        windows.append((lower_bound,upper_bound))
+        duration_list.append(total_duration)
+        make_list.append(total_makes)
+        miss_list.append(total_miss)
+        
+        
+    return make_list,miss_list, duration_list, windows
